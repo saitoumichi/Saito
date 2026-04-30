@@ -1,0 +1,20 @@
+# data
+Data/
+*.npz
+*.nii
+*.nii.gz
+
+# model weights
+*.pth
+*.pt
+*.h5
+*.ckpt
+
+# cache
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
