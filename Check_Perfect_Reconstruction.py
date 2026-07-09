@@ -709,6 +709,32 @@ else:
     )
 
 
+    if max_error.item() > 0:
+
+        error_order = int(
+            np.floor(
+                np.log10(
+                    max_error.item()
+                )
+            )
+        )
+
+        error_scale = 10.0 ** (-error_order)
+
+    else:
+
+        error_order = 0
+        error_scale = 1.0
+
+
+    print(
+        "誤差表示スケール:",
+        f"x 1e{-error_order}"
+        if max_error.item() > 0
+        else "no scaling"
+    )
+
+
 # =====================================================
 # 結果保存
 # =====================================================
@@ -829,7 +855,7 @@ if x.shape == reconstructed.shape:
 
 
     # =================================================
-    # 誤差画像
+    # 誤差画像（最大誤差基準）
     # =================================================
 
     plt.figure(
@@ -846,7 +872,14 @@ if x.shape == reconstructed.shape:
         .detach()
         .cpu()
         .numpy(),
-        cmap="gray"
+        cmap="inferno",
+        vmin=0.0,
+        vmax=max_error.item()
+    )
+
+    plt.colorbar(
+        fraction=0.046,
+        pad=0.04
     )
 
 
@@ -862,6 +895,58 @@ if x.shape == reconstructed.shape:
 
     plt.savefig(
         r"C:\Users\ri0151fv\Saito\wavelet_error.png",
+        dpi=300,
+        bbox_inches="tight"
+    )
+
+
+    plt.close()
+
+
+    # =================================================
+    # 誤差画像（拡大表示）
+    # =================================================
+
+    plt.figure(
+        figsize=(8, 8)
+    )
+
+
+    plt.imshow(
+        (
+            absolute_error[
+                0,
+                0,
+                slice_index
+            ]
+            * error_scale
+        )
+        .detach()
+        .cpu()
+        .numpy(),
+        cmap="inferno"
+    )
+
+    plt.colorbar(
+        fraction=0.046,
+        pad=0.04
+    )
+
+
+    plt.title(
+        f"Scaled Error (x 1e{-error_order})"
+        if max_error.item() > 0
+        else "Scaled Error"
+    )
+
+
+    plt.axis(
+        "off"
+    )
+
+
+    plt.savefig(
+        r"C:\Users\ri0151fv\Saito\wavelet_error_scaled.png",
         dpi=300,
         bbox_inches="tight"
     )
