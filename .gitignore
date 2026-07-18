@@ -17,4 +17,7 @@ __pycache__/
 
 # OS
 .DS_Store
-Thumbs.db
+Thumbs.dbyamato/CycleVoxelMorph.ipynb
+yamato/IEEELoss.ipynb
+*.png
+*.npy
