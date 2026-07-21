@@ -1,0 +1,337 @@
+{
+  "purpose": "diagnose image degradation on the exact 22 longitudinal fine-tuning pairs",
+  "longitudinal_pairs": 22,
+  "unique_longitudinal_patients": 22,
+  "split_counts": {
+    "Train": 18,
+    "Validation": 4
+  },
+  "primary_metrics": {
+    "image_similarity": [
+      "body_mse",
+      "body_mae",
+      "body_ncc",
+      "body_ssim"
+    ],
+    "deformation_plausibility": [
+      "jacobian_fold_fraction",
+      "log_jacobian_sd",
+      "flow_bending_energy",
+      "out_of_bounds_fraction"
+    ],
+    "direction": {
+      "body_mse": "lower",
+      "body_mae": "lower",
+      "body_ncc": "higher",
+      "body_ssim": "higher",
+      "jacobian_fold_fraction": "lower",
+      "log_jacobian_sd": "lower",
+      "flow_bending_energy": "lower",
+      "out_of_bounds_fraction": "lower"
+    }
+  },
+  "pair_macro": {
+    "rigid_input": {
+      "whole_mse": 0.014647446064786478,
+      "body_mse": 0.026998442724685778,
+      "body_mae": 0.08731577901000326,
+      "body_ncc": 0.625092166391286,
+      "body_ssim": 0.4355014291676608,
+      "high_frequency_ratio": 1.0625611733306537,
+      "high_frequency_residual": 0.06768734465268525,
+      "total_variation_ratio": 1.176658578894355,
+      "texture_deviation": 0.16246855953200298,
+      "difference_ratio_z": 1.4666910550811074,
+      "difference_ratio_y": 1.111026872288097,
+      "difference_ratio_x": 1.0803710980848833
+    },
+    "zero_flow_reconstruction": {
+      "whole_mse": 0.014644288500262932,
+      "body_mse": 0.02699509724466638,
+      "body_mae": 0.08730743503706022,
+      "body_ncc": 0.6250859200954437,
+      "body_ssim": 0.4355285099961541,
+      "high_frequency_ratio": 1.062317132949829,
+      "high_frequency_residual": 0.06767903166738423,
+      "total_variation_ratio": 1.1763874048536473,
+      "texture_deviation": 0.16228037192062897,
+      "difference_ratio_z": 1.466362476348877,
+      "difference_ratio_y": 1.1107671640136025,
+      "difference_ratio_x": 1.0801198428327388
+    },
+    "curriculum_only": {
+      "whole_mse": 0.0051654374322176655,
+      "body_mse": 0.01117770704017444,
+      "body_mae": 0.05147187310186299,
+      "body_ncc": 0.8231790282509543,
+      "body_ssim": 0.6301453560590744,
+      "high_frequency_ratio": 0.7777566151185469,
+      "high_frequency_residual": 0.046145559711889786,
+      "total_variation_ratio": 0.7653876624324105,
+      "texture_deviation": 0.27848115089264786,
+      "difference_ratio_z": 0.9422142234715548,
+      "difference_ratio_y": 0.7141388356685638,
+      "difference_ratio_x": 0.7127449647946791,
+      "total_loss": 0.00550925992005928,
+      "flow_gradient": 0.03438225176862695,
+      "flow_magnitude_p50": 2.34105643900958,
+      "flow_magnitude_p95": 5.206309221007607,
+      "flow_magnitude_max": 8.254745049910111,
+      "flow_bending_energy": 0.037951636212793266,
+      "jacobian_fold_fraction": 0.00021501020951704547,
+      "log_jacobian_sd": 0.23185486820611087,
+      "jacobian_extreme_fraction": 0.018774205988103695,
+      "out_of_bounds_fraction": 0.07088088989257812
+    },
+    "old_different_patient_finetune": {
+      "whole_mse": 0.002824817477217452,
+      "body_mse": 0.007277118232609196,
+      "body_mae": 0.04611843434924429,
+      "body_ncc": 0.8668412024324591,
+      "body_ssim": 0.5772484080357985,
+      "high_frequency_ratio": 0.8262724063613198,
+      "high_frequency_residual": 0.05217568644068458,
+      "total_variation_ratio": 0.789745336229151,
+      "texture_deviation": 0.23768604817715558,
+      "difference_ratio_z": 1.0226142487742684,
+      "difference_ratio_y": 0.7360438677397642,
+      "difference_ratio_x": 0.7127470807595686,
+      "total_loss": 0.005396440445276146,
+      "flow_gradient": 0.2571623000231656,
+      "flow_magnitude_p50": 1.9788886958902532,
+      "flow_magnitude_p95": 6.104715715755116,
+      "flow_magnitude_max": 36.845784880898215,
+      "flow_bending_energy": 0.21750011024149982,
+      "jacobian_fold_fraction": 0.09759452126242897,
+      "log_jacobian_sd": 0.8565935519608584,
+      "jacobian_extreme_fraction": 0.36864714189009234,
+      "out_of_bounds_fraction": 0.005519866943359375
+    },
+    "new_same_patient_finetune": {
+      "whole_mse": 0.0012648886715231295,
+      "body_mse": 0.003164749878289347,
+      "body_mae": 0.03487678515640172,
+      "body_ncc": 0.9391521134159782,
+      "body_ssim": 0.6825001293962653,
+      "high_frequency_ratio": 0.7738000506704504,
+      "high_frequency_residual": 0.042035909538919274,
+      "total_variation_ratio": 0.7247581481933594,
+      "texture_deviation": 0.3024122626944022,
+      "difference_ratio_z": 0.778135898438367,
+      "difference_ratio_y": 0.7112720527432181,
+      "difference_ratio_x": 0.7130321562290192,
+      "total_loss": 0.0014246284792369063,
+      "flow_gradient": 0.015973981639200992,
+      "flow_magnitude_p50": 0.6731800884008408,
+      "flow_magnitude_p95": 2.5541296005249023,
+      "flow_magnitude_max": 10.912626071409745,
+      "flow_bending_energy": 0.012703635772182182,
+      "jacobian_fold_fraction": 0.006473194469105114,
+      "log_jacobian_sd": 0.2795016101815484,
+      "jacobian_extreme_fraction": 0.031270807439630684,
+      "out_of_bounds_fraction": 0.028717734596946022
+    }
+  },
+  "patient_macro_primary": {
+    "rigid_input": {
+      "whole_mse": 0.014647446064786478,
+      "body_mse": 0.026998442724685778,
+      "body_mae": 0.08731577901000326,
+      "body_ncc": 0.625092166391286,
+      "body_ssim": 0.4355014291676608,
+      "high_frequency_ratio": 1.0625611733306537,
+      "high_frequency_residual": 0.06768734465268525,
+      "total_variation_ratio": 1.176658578894355,
+      "texture_deviation": 0.16246855953200298,
+      "difference_ratio_z": 1.4666910550811074,
+      "difference_ratio_y": 1.111026872288097,
+      "difference_ratio_x": 1.0803710980848833
+    },
+    "zero_flow_reconstruction": {
+      "whole_mse": 0.014644288500262932,
+      "body_mse": 0.02699509724466638,
+      "body_mae": 0.08730743503706022,
+      "body_ncc": 0.6250859200954437,
+      "body_ssim": 0.4355285099961541,
+      "high_frequency_ratio": 1.062317132949829,
+      "high_frequency_residual": 0.06767903166738423,
+      "total_variation_ratio": 1.1763874048536473,
+      "texture_deviation": 0.16228037192062897,
+      "difference_ratio_z": 1.466362476348877,
+      "difference_ratio_y": 1.1107671640136025,
+      "difference_ratio_x": 1.0801198428327388
+    },
+    "curriculum_only": {
+      "whole_mse": 0.0051654374322176655,
+      "body_mse": 0.01117770704017444,
+      "body_mae": 0.05147187310186299,
+      "body_ncc": 0.8231790282509543,
+      "body_ssim": 0.6301453560590744,
+      "high_frequency_ratio": 0.7777566151185469,
+      "high_frequency_residual": 0.046145559711889786,
+      "total_variation_ratio": 0.7653876624324105,
+      "texture_deviation": 0.27848115089264786,
+      "difference_ratio_z": 0.9422142234715548,
+      "difference_ratio_y": 0.7141388356685638,
+      "difference_ratio_x": 0.7127449647946791,
+      "total_loss": 0.00550925992005928,
+      "flow_gradient": 0.03438225176862695,
+      "flow_magnitude_p50": 2.34105643900958,
+      "flow_magnitude_p95": 5.206309221007607,
+      "flow_magnitude_max": 8.254745049910111,
+      "flow_bending_energy": 0.037951636212793266,
+      "jacobian_fold_fraction": 0.00021501020951704547,
+      "log_jacobian_sd": 0.23185486820611087,
+      "jacobian_extreme_fraction": 0.018774205988103695,
+      "out_of_bounds_fraction": 0.07088088989257812
+    },
+    "old_different_patient_finetune": {
+      "whole_mse": 0.002824817477217452,
+      "body_mse": 0.007277118232609196,
+      "body_mae": 0.04611843434924429,
+      "body_ncc": 0.8668412024324591,
+      "body_ssim": 0.5772484080357985,
+      "high_frequency_ratio": 0.8262724063613198,
+      "high_frequency_residual": 0.05217568644068458,
+      "total_variation_ratio": 0.789745336229151,
+      "texture_deviation": 0.23768604817715558,
+      "difference_ratio_z": 1.0226142487742684,
+      "difference_ratio_y": 0.7360438677397642,
+      "difference_ratio_x": 0.7127470807595686,
+      "total_loss": 0.005396440445276146,
+      "flow_gradient": 0.2571623000231656,
+      "flow_magnitude_p50": 1.9788886958902532,
+      "flow_magnitude_p95": 6.104715715755116,
+      "flow_magnitude_max": 36.845784880898215,
+      "flow_bending_energy": 0.21750011024149982,
+      "jacobian_fold_fraction": 0.09759452126242897,
+      "log_jacobian_sd": 0.8565935519608584,
+      "jacobian_extreme_fraction": 0.36864714189009234,
+      "out_of_bounds_fraction": 0.005519866943359375
+    },
+    "new_same_patient_finetune": {
+      "whole_mse": 0.0012648886715231295,
+      "body_mse": 0.003164749878289347,
+      "body_mae": 0.03487678515640172,
+      "body_ncc": 0.9391521134159782,
+      "body_ssim": 0.6825001293962653,
+      "high_frequency_ratio": 0.7738000506704504,
+      "high_frequency_residual": 0.042035909538919274,
+      "total_variation_ratio": 0.7247581481933594,
+      "texture_deviation": 0.3024122626944022,
+      "difference_ratio_z": 0.778135898438367,
+      "difference_ratio_y": 0.7112720527432181,
+      "difference_ratio_x": 0.7130321562290192,
+      "total_loss": 0.0014246284792369063,
+      "flow_gradient": 0.015973981639200992,
+      "flow_magnitude_p50": 0.6731800884008408,
+      "flow_magnitude_p95": 2.5541296005249023,
+      "flow_magnitude_max": 10.912626071409745,
+      "flow_bending_energy": 0.012703635772182182,
+      "jacobian_fold_fraction": 0.006473194469105114,
+      "log_jacobian_sd": 0.2795016101815484,
+      "jacobian_extreme_fraction": 0.031270807439630684,
+      "out_of_bounds_fraction": 0.028717734596946022
+    }
+  },
+  "patient_macro_same_vs_different_reduction_percent": {
+    "body_mse": 56.51094599359515,
+    "body_mae": 24.37560891098807,
+    "jacobian_fold_fraction": 93.36725629126364,
+    "log_jacobian_sd": 67.3705680434167,
+    "flow_bending_energy": 94.1592508812631,
+    "out_of_bounds_fraction": -420.26135578312494
+  },
+  "diagnostic_bootstrap_delta_not_generalisation_ci": {
+    "body_mse": [
+      -0.0041123683543198486,
+      -0.006173629830697212,
+      -0.002359874993403951
+    ],
+    "body_mae": [
+      -0.01124164919284257,
+      -0.015067632286809384,
+      -0.007913902977650817
+    ],
+    "body_ncc": [
+      0.07231091098351912,
+      0.042964651977474046,
+      0.1065623707391999
+    ],
+    "body_ssim": [
+      0.10525172136046669,
+      0.09302522282708775,
+      0.11758361729708584
+    ],
+    "jacobian_fold_fraction": [
+      -0.09112132679332387,
+      -0.09591199701482599,
+      -0.08699574037031693
+    ],
+    "log_jacobian_sd": [
+      -0.57709194177931,
+      -0.6107140489599922,
+      -0.5418970217250965
+    ],
+    "flow_bending_energy": [
+      -0.20479647446931762,
+      -0.22422846182122488,
+      -0.18755565432577648
+    ],
+    "out_of_bounds_fraction": [
+      0.023197867653586647,
+      0.019694900512695315,
+      0.026589835773814807
+    ]
+  },
+  "diagnostic_wilcoxon_p_raw_not_generalisation_test": {
+    "body_mse": 4.76837158203125e-07,
+    "body_mae": 4.76837158203125e-07,
+    "body_ncc": 4.76837158203125e-07,
+    "body_ssim": 4.76837158203125e-07,
+    "jacobian_fold_fraction": 4.76837158203125e-07,
+    "log_jacobian_sd": 4.76837158203125e-07,
+    "flow_bending_energy": 4.76837158203125e-07,
+    "out_of_bounds_fraction": 4.76837158203125e-07
+  },
+  "diagnostic_wilcoxon_p_holm_not_generalisation_test": {
+    "body_mse": 3.814697265625e-06,
+    "body_mae": 3.814697265625e-06,
+    "body_ncc": 3.814697265625e-06,
+    "body_ssim": 3.814697265625e-06,
+    "jacobian_fold_fraction": 3.814697265625e-06,
+    "log_jacobian_sd": 3.814697265625e-06,
+    "flow_bending_energy": 3.814697265625e-06,
+    "out_of_bounds_fraction": 3.814697265625e-06
+  },
+  "pair_improvement_counts": {
+    "body_mse_lower": 22,
+    "body_mae_lower": 22,
+    "body_ncc_higher": 22,
+    "body_ssim_higher": 22,
+    "jacobian_fold_fraction_lower": 22,
+    "log_jacobian_sd_lower": 22,
+    "flow_bending_energy_lower": 22,
+    "out_of_bounds_fraction_lower": 0
+  },
+  "zero_flow_control": {
+    "mse_vs_original_moving": 1.3152313864269032e-08,
+    "body_mse_vs_original_moving": 3.536363428354021e-08,
+    "body_mae_vs_original_moving": 0.00014521731315074828,
+    "body_ncc_vs_original_moving": 0.9999995367093519,
+    "body_ssim_vs_original_moving": 0.9999962692910974,
+    "high_frequency_ratio_vs_original_moving": 0.9997676475481554,
+    "total_variation_ratio_vs_original_moving": 0.9997672086412256
+  },
+  "causal_caveat": "Old and new fine-tuning differ in pairing, learning rate, epoch count, early stopping, and flow-gradient regularization; this comparison supports a hypothesis but does not isolate pairing alone.",
+  "accuracy_caveat": "These 22 pairs were used for fine-tuning or checkpoint selection, so results diagnose the pipeline but do not estimate unseen-patient generalisation. MSE, MAE, NCC, and SSIM measure image similarity, not anatomical correspondence ground truth. Lung/lobe labels or expert landmarks are required for Dice/HD95/ASSD or TRE-based registration accuracy.",
+  "exploratory_only": [
+    "high_frequency_ratio",
+    "high_frequency_residual",
+    "total_variation_ratio",
+    "texture_deviation",
+    "difference_ratio_z",
+    "difference_ratio_y",
+    "difference_ratio_x"
+  ]
+}
