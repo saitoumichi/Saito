@@ -1,0 +1,30 @@
+{
+  "split_seed": 20260725,
+  "train_patient_ids": [
+    "MIC00734",
+    "MIC05658",
+    "MIC08741",
+    "MIC15501",
+    "MIC16441",
+    "MIC26945",
+    "MIC28418",
+    "MIC36084",
+    "MIC41502",
+    "MIC42023",
+    "MIC43331",
+    "MIC44723",
+    "MIC47642",
+    "MIC49613",
+    "MIC51596",
+    "MIC51775",
+    "MIC51927",
+    "MIC52281"
+  ],
+  "validation_patient_ids": [
+    "MIC10406",
+    "MIC19606",
+    "MIC24729",
+    "MIC30567"
+  ],
+  "manifest_path": "D:\\Saito\\longitudinal22_18train_4val_checkpoints\\split_manifest.csv"
+}
