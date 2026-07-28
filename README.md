@@ -96,6 +96,25 @@
 - 後半ではLongitudinal22の22組を直接読み込んでfine-tuningする旧実装も含む。ただし患者単位の保持検証・manifest保存を行う現行経路は、`256_128model_Train_Longitudinal22_18train_4val.ipynb`である。
 - したがって、新しい実験は旧notebookを複製して始めず、目的に応じて現行の2経路を使う。旧実装はwavelet処理・カリキュラム・既存checkpointの由来を確認する参照用とする。
 
+#### 2-6. `256_128model_Train-Copy1.ipynb`：80k事前学習＋別患者fine-tuningの派生版
+
+`256_128model_Train-Copy1.ipynb` は、`TrainData_NoBed.npz` を使う実験を1冊にまとめた派生ノートブックである。現在の別患者fine-tuningノートブックの前身に近く、**事前学習済みcheckpointの作成過程を確認したいとき**や、wavelet処理を含む旧実験条件を追跡したいときに参照する。
+
+|段階|実装内容|
+|---|---|
+|入力|`Data/TrainData_NoBed.npz` の `Train` を読み、`(H, W, D, N)` から `(N, 128, 256, 256)` にtransposeする。|
+|ペア生成|batch size 2でMoving/Fixedをランダム抽出し、fine-tuning用generatorでは同じ患者IDになったFixedだけを再抽選する。|
+|80k事前学習|8×16×16の粗いランダムDVFを作り、Gaussian平滑化と補間で人工変形Moving′を生成する。2,000 epochごとに変形振幅を増やすカリキュラムを用い、推定flowと正解flowのMSE（重み0.01）＋Moving′と再構成画像のMSE（重み100）で学習する。100 epochごとに`model_analysis_pipeline_pretrain.pth`を上書き保存する。|
+|別患者fine-tuning|上記80k重みを読み込み、30,000 epoch、Adam学習率`1e-5`で更新する。損失は`MSE(Fixed, Warped)`のみで、100 epochごとに`model_analysis_pipeline_finetuned.pth`を上書き、完了時に`model_analysis_pipeline_finetuned_final.pth`を保存する。|
+|追加検証|同一ノートブック内でHaar完全再構成と周波数応答の確認を行い、結果画像の一部を`D:\\Saito`へ保存する。|
+
+**現行実装との違いと使用上の注意**
+
+- 肺maskの読み込み・overlap maskに基づく損失・独立validation splitは実装していない。肺領域を対象にした別患者実験には、`256_128model_Train_different_patients_lung_finetune.ipynb`を優先する。
+- checkpoint名が固定で、途中保存が上書きされる。そのため学習推移を再現するには、実行時にcheckpointを別名で退避する必要がある。現行notebookは1,000 epochごとの個別checkpointと利用archive情報を保存する。
+- `D:\\Saito` のWindows絶対パスが残っている。macOSで実行する場合は、保存先を現在の作業フォルダまたは任意の出力フォルダに置き換える。
+- lossの構成とfine-tuning学習率が現行版と異なるため、このnotebookから得たモデル・数値を現行版と同一条件として比較しない。
+
 ### 3. 基礎ウェーブレット処理
 
 |ファイル|役割|
@@ -134,7 +153,8 @@
 
 - `128model_Train.ipynb`／`128model_Test.ipynb`：128モデルの初期実験。
 - `256_128model_Train.ipynb`／`256_128model_Test.ipynb`：256→128の主実装の旧系統。カリキュラム実装の確認時に参照する。
-- `256_128model_Train-Copy1.ipynb` と `256_128model_Test copy.ipynb`：派生実験版。
+- `256_128model_Train-Copy1.ipynb`：80k人工DVF事前学習と別患者fine-tuningを同居させた派生版。詳細は「2-6」を参照。
+- `256_128model_Test copy.ipynb`：上記派生系統に対応するテスト実験版。
 - `*_local_backup.ipynb`、`*_github_backup.ipynb`：退避コピー。通常は編集・実行対象にしない。
 - `128model_Train_inverse-consistency constraint.ipynb`：逆写像整合性制約の検討版。
 - `yamatoCode/`：別管理されていた128/256モデルのスナップショット。
