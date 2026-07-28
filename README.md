@@ -35,6 +35,67 @@
 |セミナー用の集約評価|`256_128model_Train_different_patients_lung_finetune_seminar.ipynb`|学習はせず、完了した110kモデル、wavelet各段階、同一患者・別患者、checkpoint推移を評価する。|
 |最終比較|`256_128model_FinalEvaluation-Longitudinal22.ipynb`|モデルとハイパーパラメータ確定後に実行する評価専用ノートブック。roughness出力を調査する。|
 
+### 2-1. 学習データを使うコードの詳細
+
+このフォルダには、用途の異なる2つのfine-tuning経路がある。**同一患者の経時CTを登録するなら Longitudinal22（18/4分割）**、**多数の異なる患者画像で追加学習するなら different-patient fine-tuning** を用いる。両者は入力データ、ペアの作り方、検証の扱いが異なるため、混在させない。
+
+|経路|主ノートブック|学習データ|ペアの単位|検証|
+|---|---|---|---|---|
+|同一患者・経時登録|`256_128model_Train_Longitudinal22_18train_4val.ipynb`|`Data/Longitudinal22/pair*/` 内の22組|同じ患者の earlier（Moving）→ later（Fixed）を固定で使用|患者単位で18組を学習、4組を保持検証|
+|別患者fine-tuning|`256_128model_Train_different_patients_lung_finetune.ipynb`|`Data/TrainData_NoBed.npz`（または肺マスク済み候補archive）|毎iterationで異なる患者IDをランダムに抽出|学習バッチに対する途中表示。独立test splitはこのnotebook内では作らない|
+|旧・基礎事前学習|`256_128model_Train.ipynb`|`Data/TrainData_NoBed.npz`|同一archiveからランダム抽出し、人工DVFでMoving′を生成|保存済み80k checkpointを後続fine-tuningが利用|
+
+#### 2-2. 共通するデータ形状と登録パイプライン
+
+- 学習に渡す各CTは `(D, H, W) = (128, 256, 256)`、PyTorch入力では `(B, 1, 128, 256, 256)` を想定する。
+- `TrainData_NoBed.npz` の旧コードは `Train` キーを読み、`(H, W, D, N)` 形式を `np.transpose(..., (3, 0, 1, 2))` で `(N, 128, 256, 256)` に変換する。
+- 登録処理は `Moving / Fixed → 3D Haar Analysis → 8サブバンドを1/2 downsample → VxmDense_128_256_256でflow推定 → 各サブバンドをwarp → upsample → Haar Synthesis → Warped` の順である。flowの空間サイズは `(64, 128, 128)`。
+- fine-tuningの基本損失は `MSE(Fixed, Warped) + 0.1 × flowの3方向勾配二乗平均`。勾配ノルムは最大1.0にclipし、Adam（学習率 `1e-6`）で更新する。
+
+#### 2-3. Longitudinal22：同一患者の18学習／4検証
+
+**データ探索と入力チェック**
+
+1. `Data/Longitudinal22` にある `pair*` フォルダを番号順に取得し、**22組ちょうど**であることを検査する。
+2. 各組について `registered_masked_A_*.npz` をMoving、`fixed_masked_B_*.npz` をFixedとして各1ファイルだけ取得する。どちらも `.npz` 内の `Train` キーを `float32` で読み、形状が `(128, 256, 256)` であることを確認する。
+3. ファイル名から `MIC...` の患者IDを抽出し、22組が22患者に対応することを確認する。`Data/TestData` が存在するときは、テスト患者IDとの重複もエラーにする。
+
+**分割と再現性**
+
+- `SPLIT_SEED = 20260725` で患者ペアをshuffleし、先頭4組をvalidation、残り18組をtrainingに固定する。患者ID集合が重ならないことをassertするため、同一患者が学習と検証へまたがるデータリークを防ぐ。
+- 分割は `longitudinal22_18train_4val_checkpoints/split_manifest.csv`（各ペア、患者ID、Moving/Fixed絶対パス）と `split_metadata.json`（seedと患者ID）へ保存される。再実行・論文用の再現確認では、この2ファイルを基準にする。
+
+**学習・検証・保存**
+
+- `model_analysis_pipeline_pretrain.pth` の80k事前学習重みを読み込んでから、`TOTAL_ITERATIONS = 30000`、`BATCH_SIZE = 2` で学習する。学習時は18組から `SAMPLING_SEED = 20260726` の乱数でバッチを抽出し、validationの4組を一切抽出しない。
+- 1,000 iterationごとに4組すべてで MSE、MAE、NCC を計算する。`validation_history.csv`、指標グラフ、Moving/Fixed/Warpedと誤差図をcheckpointフォルダへ保存する。
+- 同じ間隔でcheckpointを保存し、validation MSEが最小のものは `model_analysis_pipeline_longitudinal22_18train_4val_best.pth` として別途保存する。checkpoint本体にも分割seed、患者ID、manifest参照、学習・検証ペアの情報が記録される。
+
+#### 2-4. different-patient：肺領域優先fine-tuning
+
+**入力archiveの優先順位**
+
+1. `Data/TrainData_NoBed_LungMasked.npz`、`TrainData_NoBed_lung_masked.npz`、`TrainData_NoBed_Masked.npz`、`TrainData_NoBed_masked.npz` をこの順で探索する。
+2. 見つからなければ `Data/TrainData_NoBed.npz` を使う。volume keyは `Train_lung_masked` 等を優先し、なければ `Train` を読む。対応するmask key（`LungMask`、`Train_lung_mask`、`mask`等）があれば二値化して `volumes * masks` を入力にする。
+3. maskもマスク済みarchiveもない場合は警告を表示し、非マスク画像で学習を続行する。この場合、肺領域限定の評価にはならないため、結果の解釈時に明記する。
+
+**ペア作成と損失**
+
+- archiveのデータは内部形式を `(N, 128, 256, 256)` に正規化する。対応できる4次元配列形状以外はエラーで停止する。
+- `different_patient_generator` はseed 42の乱数でMoving IDとFixed IDを各バッチ2例ずつ選び、IDが同じになった要素だけ再抽選する。そのため、**同一患者ペアは生成しない**。
+- maskがある場合はMoving/Fixedの積集合を `overlap_mask` とし、画像MSEを肺領域の重なりボクセルだけで計算する。maskがない場合は全ボクセルMSEを使う。flow平滑化項と合算する点はLongitudinal22と同じである。
+- 80k事前学習重みを読み込んで30,000 epoch追加学習する。1,000 epochごとに`finetune_checkpoints_different_patients/finetune_epoch_*.pth`へ、最終状態は`finetuned_different_patients_final.pth`へ保存する。checkpointにはepoch、モデル・optimizer状態、使用archive、肺mask使用の有無が入る。
+
+**注意：独立した性能評価**
+
+このnotebookの100 epochごとのMSE/MAE表示は、その時に学習へ使用したランダムバッチの前後比較であり、独立validationではない。論文・発表用の性能値には、`256_128model_Train_different_patients_lung_finetune_seminar.ipynb` の固定10ペア比較、または別途固定したtest患者集合を用いる。
+
+#### 2-5. 旧`256_128model_Train.ipynb`の位置づけ
+
+- `TrainData_NoBed.npz`の`Train`をランダム抽出し、粗いランダムDVFを平滑化・補間して人工的な正解画像Moving′を作る事前学習コードを含む。変形の大きさは一定間隔で段階的に増やすカリキュラム方式で、通常は `run_pretraining = False` のまま既存80k checkpointを利用する。
+- 後半ではLongitudinal22の22組を直接読み込んでfine-tuningする旧実装も含む。ただし患者単位の保持検証・manifest保存を行う現行経路は、`256_128model_Train_Longitudinal22_18train_4val.ipynb`である。
+- したがって、新しい実験は旧notebookを複製して始めず、目的に応じて現行の2経路を使う。旧実装はwavelet処理・カリキュラム・既存checkpointの由来を確認する参照用とする。
+
 ### 3. 基礎ウェーブレット処理
 
 |ファイル|役割|
