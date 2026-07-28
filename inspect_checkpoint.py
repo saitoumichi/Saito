@@ -124,3 +124,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+torch.save({
+    'epoch': epoch + 1,
+    'model_state_dict': model3D.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'training_type': 'curriculum_pretraining',
+    'wavelet_enabled': True,
+}, 'model_analysis_pipeline_pretrain.pth')
