@@ -1,6 +1,92 @@
 # 高解像度胸部CT画像の非剛体レジストレーション  
 ## 3次元Haarウェーブレット変換・完全再構成・VoxelMorphを用いた検証
 
+> **まず読む場所**：このフォルダには、基礎実装・学習実験・評価実験・バックアップが混在しています。通常は、下記の「推奨ワークフロー」に挙げた3冊のノートブックと、その結果フォルダを使用してください。`*_backup.ipynb`、`*_local_backup.ipynb`、`Copy1`、`yamatoCode/` は再現用の主系統ではなく、比較・退避用です。
+
+## ファイル案内と推奨ワークフロー
+
+### 1. このフォルダの全体像
+
+```text
+基礎検証（Haar 3D 変換）
+  Analysis_Filter.py → Down_Sampling.py → Up_Sampling.py
+                     → Synthesis_Filter.py → Confirm_Reconfiguration.py
+  または Check_Perfect_Reconstruction.py（上記を1本で検証）
+
+主な学習・検証（Longitudinal22）
+  256_128model_Train_Longitudinal22_18train_4val.ipynb
+      → longitudinal22_18train_4val_checkpoints/
+      → 256_128model_Validate_Longitudinal22_18train_4val.ipynb
+      → longitudinal22_18train_4val_validation_results/
+
+別患者ファインチューニングと最終評価
+  256_128model_Train_different_patients_lung_finetune.ipynb
+      → 256_128model_Train_different_patients_lung_finetune_seminar.ipynb
+      → Evaluation_Longitudinal22/・Evaluation_Longitudinal22_TrainingDiagnostic/
+```
+
+### 2. まず使うファイル
+
+|目的|ファイル|内容・出力|
+|---|---|---|
+|Longitudinal22の学習|`256_128model_Train_Longitudinal22_18train_4val.ipynb`|22症例を18例学習・4例検証に固定して、30,000 iterationのfine-tuningを行う。checkpoint、split manifest、学習履歴を`longitudinal22_18train_4val_checkpoints/`へ保存。|
+|保持検証|`256_128model_Validate_Longitudinal22_18train_4val.ipynb`|上の学習済みcheckpointを4例の保持検証データで評価。|
+|別患者fine-tuning|`256_128model_Train_different_patients_lung_finetune.ipynb`|80k checkpointを読み込み、肺領域を優先した別患者ペアでfine-tuningする主ノートブック。|
+|セミナー用の集約評価|`256_128model_Train_different_patients_lung_finetune_seminar.ipynb`|学習はせず、完了した110kモデル、wavelet各段階、同一患者・別患者、checkpoint推移を評価する。|
+|最終比較|`256_128model_FinalEvaluation-Longitudinal22.ipynb`|モデルとハイパーパラメータ確定後に実行する評価専用ノートブック。roughness出力を調査する。|
+
+### 3. 基礎ウェーブレット処理
+
+|ファイル|役割|
+|---|---|
+|`Analysis_Filter.py`|3D Haar Analysisフィルタで8サブバンド（LLL〜HHH）を作成し、`analysis_output.npy`を保存。|
+|`Down_Sampling.py`|Analysis出力を各軸で1/2に間引き、`analysis_downsampled.npy`を保存。|
+|`Up_Sampling.py`|サブバンドをゼロ挿入で2倍に戻し、`upsampled_output.npy`を保存。|
+|`Synthesis_Filter.py`|8サブバンドに対応するSynthesisフィルタを適用・加算して再構成する。|
+|`Confirm_Reconfiguration.py`|原画像と再構成画像の形状・MAE・最大誤差・MSE・相対誤差を確認する。|
+|`Check_Perfect_Reconstruction.py`|Analysisから逆変換までを単体で実行する完全再構成テスト。個別スクリプトの代わりにこちらを優先してよい。|
+|`256pictures.py`|ノートブック上で定義済みの`x_train`とHaar関数を用い、256³画像の逆変換誤差を確認する補助コード。|
+
+### 4. 評価・診断の補助コード
+
+|ファイル|役割|
+|---|---|
+|`validation_data_evaluation.py`|notebookから`%run`で読み込む検証関数。患者単位でtrain/validationを分割し、MSE・MAE・NCC・平均変位をCSVと画像に保存する。|
+|`inspect_npz.py`|`.npz`データのキー、形状、dtype、統計量、中央断面を確認する。例：`python3 inspect_npz.py Data/TrainData_NoBed.npz`。|
+|`inspect_checkpoint.py`|checkpointに保存されたepoch/step、wavelet、curriculumのメタデータを読取専用で確認する。重みだけでは学習条件を断定しない。|
+|`verify_training_provenance.py`|notebook・Pythonファイルから、80k checkpoint／wavelet／curriculumに関する記述を横断検索する。|
+|`check_curriculum_logic.py`|`256_128model_Train.ipynb`の変形量・段階制御に関する候補セルを抽出する。|
+
+### 5. 結果フォルダ
+
+|フォルダ／ファイル|内容|
+|---|---|
+|`longitudinal22_18train_4val_checkpoints/`|18/4分割の`split_manifest.csv`・`split_metadata.json`と`validation_history.csv`。データ分割の再現性確認に使用。|
+|`longitudinal22_18train_4val_validation_results/`|保持検証のペア別指標。|
+|`validation_results/`|fine-tuning中の検証指標と、epoch 110000のペア別評価。|
+|`Evaluation_Longitudinal22/`|最終評価のroughnessに関する患者・ペア別集計とsummary。|
+|`Evaluation_Longitudinal22_TrainingDiagnostic/`|学習診断用の患者別・ペア別・分割別集計。|
+|`seminar_checkpoint_metrics.csv`、`seminar_same_patient_checkpoint_metrics.csv`|セミナー用のcheckpointごとの指標比較。|
+|`wavelet_eval_results.csv`|wavelet処理段階ごとの評価結果。|
+
+### 6. 旧版・バックアップ
+
+- `128model_Train.ipynb`／`128model_Test.ipynb`：128モデルの初期実験。
+- `256_128model_Train.ipynb`／`256_128model_Test.ipynb`：256→128の主実装の旧系統。カリキュラム実装の確認時に参照する。
+- `256_128model_Train-Copy1.ipynb` と `256_128model_Test copy.ipynb`：派生実験版。
+- `*_local_backup.ipynb`、`*_github_backup.ipynb`：退避コピー。通常は編集・実行対象にしない。
+- `128model_Train_inverse-consistency constraint.ipynb`：逆写像整合性制約の検討版。
+- `yamatoCode/`：別管理されていた128/256モデルのスナップショット。
+
+### 7. 実行前の注意
+
+- 主要notebookはデータファイル、checkpoint、実行環境（PyTorch／VoxelMorph等）に依存します。実行前にパスと存在を確認してください。
+- 一部の補助スクリプトには`C:\\Users\\ri0151fv\\Saito`の絶対パスが残っています。macOS環境ではフォルダパスへ置換が必要です。
+- `validation_data_evaluation.py`は単独実行用ではありません。`volumes`、`lung_masks`、`device`、`reconstruct_warped()`を定義したnotebookの後に`%run validation_data_evaluation.py`で利用します。
+- 評価専用と明記されたnotebookは、学習済みモデルと設定を固定した後に実行してください。テスト症例をfine-tuning用generatorへ入れないこと。
+
+---
+
 ## 1. 研究概要
 
 本研究では、胸部CT画像の経時比較を支援するために、**3次元ウェーブレット変換と深層学習ベースの非剛体画像レジストレーションを組み合わせた手法**を検討する。
