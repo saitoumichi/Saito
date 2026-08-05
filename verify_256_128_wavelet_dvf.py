@@ -18,7 +18,9 @@ import copy
 import csv
 import json
 import math
+import shutil
 import sys
+import zipfile
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -102,21 +104,48 @@ def metrics(reference: torch.Tensor, prediction: torch.Tensor) -> dict[str, floa
     }
 
 
-def load_volumes(data_path: Path) -> np.ndarray:
-    with np.load(data_path, allow_pickle=False) as archive:
-        if "Train" not in archive.files:
-            raise KeyError(f"{data_path} has no 'Train' key: {archive.files}")
-        raw = np.asarray(archive["Train"], dtype=np.float32)
-    if raw.ndim != 4:
-        raise ValueError(f"Expected a 4-D Train array, got {raw.shape}")
-    # Original notebook format is (D,H,W,N) or equivalently (H,W,D,N) after prior preparation.
-    if raw.shape[:3] == FULL_SHAPE:
-        volumes = np.transpose(raw, (3, 0, 1, 2))
-    elif raw.shape[1:] == FULL_SHAPE:
-        volumes = raw
-    else:
-        raise ValueError(f"Cannot normalize Train array {raw.shape} to (N,{FULL_SHAPE})")
-    return np.ascontiguousarray(volumes)
+class VolumeStore:
+    """Read one volume at a time without holding the full archive in RAM."""
+
+    def __init__(self, raw: np.ndarray):
+        if raw.ndim != 4:
+            raise ValueError(f"Expected a 4-D Train array, got {raw.shape}")
+        self.raw = raw
+        if raw.shape[:3] == FULL_SHAPE:
+            self.sample_axis = 3
+            self.count = raw.shape[3]
+        elif raw.shape[1:] == FULL_SHAPE:
+            self.sample_axis = 0
+            self.count = raw.shape[0]
+        else:
+            raise ValueError(f"Cannot normalize Train array {raw.shape} to samples of {FULL_SHAPE}")
+
+    def get(self, index: int) -> np.ndarray:
+        index %= self.count
+        source = self.raw[..., index] if self.sample_axis == 3 else self.raw[index]
+        return np.ascontiguousarray(source, dtype=np.float32)[None]
+
+
+def load_volumes(data_path: Path, cache_path: Path) -> VolumeStore:
+    """Use a disk-backed NPY cache because ``np.load(npz)['Train']`` needs ~25 GiB RAM.
+
+    The initial extraction is streamed, so it does not allocate the full array.
+    It needs approximately the uncompressed array size as free disk space once.
+    """
+    if data_path.suffix.lower() == ".npy":
+        return VolumeStore(np.load(data_path, mmap_mode="r"))
+    if data_path.suffix.lower() != ".npz":
+        raise ValueError(f"Expected .npz or .npy data, got {data_path}")
+    if not cache_path.exists():
+        print(f"Creating disk-backed cache (one-time, no 25 GiB RAM allocation): {cache_path}")
+        with zipfile.ZipFile(data_path) as archive:
+            member = next((name for name in archive.namelist() if Path(name).name == "Train.npy"), None)
+            if member is None:
+                raise KeyError(f"{data_path} has no Train.npy member: {archive.namelist()}")
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(member) as source, cache_path.open("wb") as destination:
+                shutil.copyfileobj(source, destination, length=16 * 1024 * 1024)
+    return VolumeStore(np.load(cache_path, mmap_mode="r"))
 
 
 def smooth_random_full_flow(seed: int, shift_range: float, device: torch.device) -> torch.Tensor:
@@ -216,7 +245,9 @@ def train_scale_condition(volumes, scale: float, steps: int, seed: int, shift_ra
     diagnostic = None
 
     for step in range(steps):
-        moving_np = volumes[step % len(volumes) : step % len(volumes) + 1]
+        # One fixed source image keeps the two label-scale conditions exactly comparable
+        # and avoids loading the large NPZ array into RAM.
+        moving_np = volumes.get(0)
         moving = torch.from_numpy(moving_np).unsqueeze(1).to(device)
         full_teacher = smooth_random_full_flow(seed + step, shift_range, device)
         target = full_transformer(moving, full_teacher)
@@ -310,8 +341,8 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     output_dir = SAITO_ROOT / "dvf_wavelet_verification"
     output_dir.mkdir(exist_ok=True)
-    volumes = load_volumes(args.data)
-    moving = torch.from_numpy(volumes[0:1]).unsqueeze(1).to(device)
+    volumes = load_volumes(args.data, output_dir / "TrainData_NoBed_Train.npy")
+    moving = torch.from_numpy(volumes.get(0)).unsqueeze(1).to(device)
     analysis, filters, full_transformer, low_transformer = prepare_wavelet_pipeline(device)
 
     a_rows = experiment_a(moving, analysis, filters, full_transformer, low_transformer, output_dir)
@@ -332,6 +363,7 @@ def main():
 
     summary = {
         "device": str(device), "data": str(args.data), "checkpoint": str(checkpoint) if checkpoint else None,
+        "source_volume_count": volumes.count,
         "steps": args.steps, "shift_range": args.shift_range, "experiment_A": a_rows,
         "experiment_C_first_step": {str(scale): rows[0] for scale, rows in b_rows.items()},
     }
