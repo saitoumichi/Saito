@@ -248,6 +248,96 @@ def short_training_check(moving, steps: int, output_dir: Path, device: torch.dev
         writer = csv.DictWriter(file, fieldnames=rows[0].keys()); writer.writeheader(); writer.writerows(rows)
 
 
+def compare_dvf_weights(moving, steps: int, output_dir: Path, device: torch.device, checkpoint: Path | None,
+                        dvf_weights=(0.01, 0.2, 0.5, 2.0)):
+    """Compare DVF loss weights from identical initial weights and synthetic samples."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    if tuple(moving.shape[2:]) != FULL_SHAPE:
+        raise ValueError(f"Stage D requires {FULL_SHAPE}, got {tuple(moving.shape[2:])}")
+    torch.manual_seed(20260806)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(20260806)
+    analysis = HaarAnalysis().to(device).eval()
+    filters = make_synthesis_filters(device)
+    full_transformer = vxm.layers.SpatialTransformer(FULL_SHAPE).to(device)
+    low_transformer = vxm.layers.SpatialTransformer(LOW_SHAPE).to(device)
+
+    template = vxm.networks.VxmDense_128_256_256(FULL_SHAPE, NB_FEATURES, int_steps=0).to(device)
+    if checkpoint:
+        try:
+            state = torch.load(checkpoint, map_location=device, weights_only=True)
+        except TypeError:
+            state = torch.load(checkpoint, map_location=device)
+        template.load_state_dict(state.get("model_state_dict", state))
+    # Keep the common initial state on CPU so only one model occupies GPU memory at a time.
+    initial_state = {name: value.detach().cpu().clone() for name, value in template.state_dict().items()}
+    del template
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    rows = []
+    summary = []
+    for dvf_weight in dvf_weights:
+        model = vxm.networks.VxmDense_128_256_256(FULL_SHAPE, NB_FEATURES, int_steps=0).to(device)
+        model.load_state_dict(initial_state)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+        condition_rows = []
+        for step in range(steps):
+            teacher_full = smooth_teacher(1234 + step, device)
+            moving_prime = full_transformer(moving, teacher_full)
+            moving_w = downsample(analysis(moving))
+            fixed_w = downsample(analysis(moving_prime))
+            teacher_low = F.interpolate(teacher_full, size=LOW_SHAPE, mode="trilinear", align_corners=False) * .5
+            optimizer.zero_grad(set_to_none=True)
+            vec = model(moving_w, fixed_w)
+            transformed = wavelet_warp(moving, vec, analysis, filters, low_transformer)
+            dvf_raw = F.mse_loss(teacher_low, vec)
+            image_raw = F.mse_loss(moving_prime, transformed)
+            dvf_weighted, image_weighted = dvf_raw * dvf_weight, image_raw * 100.0
+            total = dvf_weighted + image_weighted
+            total.backward()
+            optimizer.step()
+            row = {
+                "dvf_weight": dvf_weight, "step": step + 1,
+                "dvf_raw": float(dvf_raw), "image_raw": float(image_raw),
+                "dvf_weighted": float(dvf_weighted), "image_weighted": float(image_weighted),
+                "total": float(total),
+                "image_to_dvf": float(image_weighted.detach() / dvf_weighted.detach().clamp_min(1e-12)),
+                "vec_abs_max": float(vec.detach().abs().max()),
+            }
+            condition_rows.append(row)
+            rows.append(row)
+        summary.append({
+            "dvf_weight": dvf_weight,
+            "mean_dvf_weighted": float(np.mean([row["dvf_weighted"] for row in condition_rows])),
+            "mean_image_weighted": float(np.mean([row["image_weighted"] for row in condition_rows])),
+            "mean_image_to_dvf": float(np.mean([row["image_to_dvf"] for row in condition_rows])),
+            "final_total": condition_rows[-1]["total"],
+            "final_vec_abs_max": condition_rows[-1]["vec_abs_max"],
+        })
+        print(f"DVF weight={dvf_weight:g}: mean image/DVF={summary[-1]['mean_image_to_dvf']:.2f}, "
+              f"final total={summary[-1]['final_total']:.6g}")
+        del model, optimizer
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    with (output_dir / "weight_comparison_steps.csv").open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=rows[0].keys()); writer.writeheader(); writer.writerows(rows)
+    with (output_dir / "weight_comparison_summary.csv").open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=summary[0].keys()); writer.writeheader(); writer.writerows(summary)
+    figure, axis = plt.subplots(figsize=(7, 4))
+    axis.bar([str(row["dvf_weight"]) for row in summary], [row["mean_image_to_dvf"] for row in summary])
+    axis.axhline(1.0, color="red", linestyle="--", label="equal contribution")
+    axis.set_yscale("log")
+    axis.set_xlabel("DVF loss weight")
+    axis.set_ylabel("mean image / DVF contribution (log)")
+    axis.set_title("Loss-weight comparison: target ratio = 1")
+    axis.legend()
+    figure.tight_layout()
+    figure.savefig(output_dir / "weight_comparison_ratio.png", dpi=160)
+    plt.close(figure)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", choices=("A", "B", "C"), required=True)
