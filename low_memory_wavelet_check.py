@@ -117,7 +117,9 @@ def read_one_volume(path: Path, key: str | None, index: int, device: torch.devic
         selected_key = key or (archive.files[0] if len(archive.files) == 1 else None)
         if selected_key is None:
             raise ValueError(f"Specify --key. Available keys: {archive.files}")
-        if selected_key == "Train":
+        # Longitudinal22の個別患者NPZもキー名は ``Train`` なので、
+        # キー名ではなく全症例アーカイブのファイル名で判定する。
+        if selected_key == "Train" and path.name == "TrainData_NoBed.npz":
             raise ValueError("TrainData_NoBed.npz は使えません。1症例だけのNPY/NPZを指定してください。")
         array = archive[selected_key]
     else:
