@@ -161,6 +161,7 @@ def save_shift_figure(output: Path, moving, full_warp, band_warp, full_shift: in
 
 
 def constant_shift_check(moving, output_dir: Path, device: torch.device):
+    output_dir.mkdir(parents=True, exist_ok=True)
     shape = tuple(moving.shape[2:])
     low_shape = tuple(length // 2 for length in shape)
     analysis = HaarAnalysis().to(device).eval()
@@ -195,6 +196,7 @@ def smooth_teacher(seed: int, device: torch.device) -> torch.Tensor:
 
 
 def short_training_check(moving, steps: int, output_dir: Path, device: torch.device, checkpoint: Path | None):
+    output_dir.mkdir(parents=True, exist_ok=True)
     if tuple(moving.shape[2:]) != FULL_SHAPE:
         raise ValueError(f"Stage C requires {FULL_SHAPE}, got {tuple(moving.shape[2:])}")
     analysis = HaarAnalysis().to(device).eval()
