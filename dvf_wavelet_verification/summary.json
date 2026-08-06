@@ -1,0 +1,63 @@
+{
+  "device": "cuda:0",
+  "data": "D:\\Saito\\Data\\TrainData_NoBed.npz",
+  "checkpoint": "D:\\Saito\\model_analysis_pipeline_pretrain.pth",
+  "steps": 100,
+  "shift_range": 10.0,
+  "experiment_A": [
+    {
+      "full_x_shift_voxels": 1,
+      "low_x_shift_voxels": 0.5,
+      "mae": 0.00910365954041481,
+      "mse": 0.0007659406401216984,
+      "max_abs_error": 0.5890628099441528
+    },
+    {
+      "full_x_shift_voxels": 2,
+      "low_x_shift_voxels": 1.0,
+      "mae": 1.6107784972518857e-07,
+      "mse": 3.404466378947868e-13,
+      "max_abs_error": 1.341104507446289e-05
+    }
+  ],
+  "experiment_C_first_step": {
+    "1.0": {
+      "step": 1,
+      "teacher_scale": 1.0,
+      "loss_vec_raw": 0.15218040347099304,
+      "loss_image_raw": 0.0002819052606355399,
+      "loss_vec_weighted": 0.0015218040207400918,
+      "loss_image_weighted": 0.028190525248646736,
+      "total_loss": 0.02971232868731022,
+      "prediction_mean": 0.023098643869161606,
+      "prediction_std": 0.4703197479248047,
+      "prediction_max_abs": 6.824239730834961,
+      "teacher_prediction_mae": 0.2846078872680664,
+      "gradient_l2_norm": 0.11635632812976837,
+      "parameters_with_gradient": 58,
+      "parameter_max_abs_change": 0.00010000169277191162,
+      "parameter_mean_abs_change": 9.832647629082203e-05,
+      "updated_parameter_tensors": 58,
+      "total_parameter_tensors": 58
+    },
+    "0.5": {
+      "step": 1,
+      "teacher_scale": 0.5,
+      "loss_vec_raw": 0.13868552446365356,
+      "loss_image_raw": 0.0002819052606355399,
+      "loss_vec_weighted": 0.0013868552632629871,
+      "loss_image_weighted": 0.028190525248646736,
+      "total_loss": 0.029577380046248436,
+      "prediction_mean": 0.023098643869161606,
+      "prediction_std": 0.4703197479248047,
+      "prediction_max_abs": 6.824239730834961,
+      "teacher_prediction_mae": 0.26279205083847046,
+      "gradient_l2_norm": 0.1234632134437561,
+      "parameters_with_gradient": 58,
+      "parameter_max_abs_change": 0.00010000169277191162,
+      "parameter_mean_abs_change": 9.843243606155738e-05,
+      "updated_parameter_tensors": 58,
+      "total_parameter_tensors": 58
+    }
+  }
+}
