@@ -174,14 +174,30 @@ def load_test_pair_folders(root):
 
 def save_case_figure(case_id, moving, fixed, moved_128, moved_wavelet):
     middle = moving.shape[2] // 2
-    images = [moving, fixed, moved_128, moved_wavelet]
-    titles = ["Moving", "Fixed", "128 baseline", "256 + Wavelet"]
     vmin, vmax = np.percentile(moving[0, 0, middle].cpu(), [1, 99])
-    figure, axes = plt.subplots(1, 4, figsize=(16, 4), constrained_layout=True)
-    for axis, image, title in zip(axes, images, titles):
+    figure, axes = plt.subplots(2, 3, figsize=(13, 8), constrained_layout=True)
+    images = [moving, fixed, moved_128, moved_wavelet]
+    titles = ["Moving", "Fixed", "128 baseline: moved", "256 + Wavelet: moved"]
+    for axis, image, title in zip(axes.flat[:4], images, titles):
         axis.imshow(image[0, 0, middle].cpu(), cmap="gray", vmin=vmin, vmax=vmax)
         axis.set_title(title)
         axis.axis("off")
+    difference_128 = (moved_128 - fixed)[0, 0, middle].cpu()
+    difference_wavelet = (moved_wavelet - fixed)[0, 0, middle].cpu()
+    difference_limit = max(
+        torch.quantile(difference_128.abs(), 0.99).item(),
+        torch.quantile(difference_wavelet.abs(), 0.99).item(),
+        1e-6,
+    )
+    for axis, difference, title in zip(
+        axes.flat[4:],
+        (difference_128, difference_wavelet),
+        ("128 baseline: moved − fixed", "256 + Wavelet: moved − fixed"),
+    ):
+        image = axis.imshow(difference, cmap="coolwarm", vmin=-difference_limit, vmax=difference_limit)
+        axis.set_title(title)
+        axis.axis("off")
+        figure.colorbar(image, ax=axis, fraction=0.046, pad=0.04)
     figure.savefig(OUTPUT_DIR / f"case_{case_id:02d}_comparison.png", dpi=200, bbox_inches="tight")
     plt.close(figure)
 
