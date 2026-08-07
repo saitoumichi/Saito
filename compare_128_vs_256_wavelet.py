@@ -16,12 +16,14 @@ import torch.nn.functional as F
 import voxelmorph as vxm
 
 # ===== ユーザー設定 =====
-TEST_DATA_PATH = Path("Data/TestData_NoBed.npz")
+# 単一npzを使う場合だけ設定する。pair別フォルダを使う場合は None のままにする。
+TEST_DATA_PATH = None
+TEST_PAIR_ROOT = Path("Data/TestData")
 CHECKPOINT_128_PATH = Path("yamatoCode/a.pth")
 CHECKPOINT_WAVELET_PATH = Path(
     "curriculum_checkpoints_dvf_scale_corrected/pretrain_epoch_80000.pth"
 )
-# 対応するMoving / Fixedのテスト症例番号に変更すること。
+# TEST_DATA_PATH を使う場合だけ、対応するMoving / Fixedの症例番号に変更すること。
 TEST_PAIRS = [(0, 1), (2, 3), (4, 5)]
 OUTPUT_DIR = Path("comparison_128_vs_256_wavelet")
 # =======================
@@ -116,6 +118,60 @@ def load_test_volumes(path):
     return volumes.astype(np.float32), key
 
 
+def load_single_volume(path):
+    """npyまたはnpzから1症例の3D画像を読み込む。"""
+    if path.suffix.lower() == ".npy":
+        volume = np.load(path)
+    elif path.suffix.lower() == ".npz":
+        archive = np.load(path)
+        if len(archive.files) != 1:
+            raise ValueError(
+                f"{path} は複数配列を含みます。Moving/Fixedを別ファイルにするか、"
+                "moving/fixedキーを持つ1つのnpzにしてください。"
+            )
+        volume = archive[archive.files[0]]
+    else:
+        raise ValueError(f"未対応の画像形式です: {path}")
+    volume = np.squeeze(volume)
+    if tuple(volume.shape) != FULL_SHAPE:
+        raise ValueError(f"{path.name} の形状が {FULL_SHAPE} ではありません: {volume.shape}")
+    return volume.astype(np.float32)
+
+
+def load_test_pair_folders(root):
+    """pair1等の各フォルダからMoving/Fixedの3D画像を読み込む。"""
+    if not root.is_dir():
+        raise FileNotFoundError(f"テストペアフォルダが見つかりません: {root.resolve()}")
+    cases = []
+    for pair_dir in sorted(path for path in root.iterdir() if path.is_dir()):
+        files = sorted(
+            list(pair_dir.glob("*.npy")) + list(pair_dir.glob("*.npz"))
+        )
+        # 実データでは registered_masked_A_* をMoving、fixed_masked_B_* をFixedとして扱う。
+        moving_files = [
+            path for path in files
+            if "moving" in path.stem.lower() or "registered" in path.stem.lower()
+        ]
+        fixed_files = [path for path in files if "fixed" in path.stem.lower()]
+        if moving_files and fixed_files:
+            moving_path, fixed_path = moving_files[0], fixed_files[0]
+        elif len(files) == 2:
+            # ファイル名にMoving/Fixedがない場合は、名前順の1番目をMoving、2番目をFixedとみなす。
+            moving_path, fixed_path = files
+            print(f"[注意] {pair_dir.name}: Moving/Fixed名がないため名前順で使用: "
+                  f"{moving_path.name} → {fixed_path.name}")
+        else:
+            print(f"[スキップ] {pair_dir.name}: npy/npzのMoving・Fixedペアを特定できません")
+            continue
+        cases.append((pair_dir.name, load_single_volume(moving_path), load_single_volume(fixed_path)))
+    if not cases:
+        raise FileNotFoundError(
+            f"{root.resolve()} 内に評価できるペアがありません。各pairフォルダに"
+            "Moving/Fixedを名前に含む.npyまたは.npzを置いてください。"
+        )
+    return cases
+
+
 def save_case_figure(case_id, moving, fixed, moved_128, moved_wavelet):
     middle = moving.shape[2] // 2
     images = [moving, fixed, moved_128, moved_wavelet]
@@ -131,11 +187,23 @@ def save_case_figure(case_id, moving, fixed, moved_128, moved_wavelet):
 
 
 def main():
-    for path in (TEST_DATA_PATH, CHECKPOINT_128_PATH, CHECKPOINT_WAVELET_PATH):
+    required_paths = (CHECKPOINT_128_PATH, CHECKPOINT_WAVELET_PATH)
+    if TEST_DATA_PATH is not None:
+        required_paths = (TEST_DATA_PATH,) + required_paths
+    for path in required_paths:
         if not path.exists():
             raise FileNotFoundError(f"ファイルが見つかりません: {path.resolve()}")
     OUTPUT_DIR.mkdir(exist_ok=True)
-    volumes, array_key = load_test_volumes(TEST_DATA_PATH)
+    if TEST_DATA_PATH is None:
+        test_cases = load_test_pair_folders(TEST_PAIR_ROOT)
+        test_source = f"pair folders: {TEST_PAIR_ROOT.resolve()}"
+    else:
+        volumes, array_key = load_test_volumes(TEST_DATA_PATH)
+        test_cases = [
+            (f"pair_{moving_id}_{fixed_id}", volumes[moving_id], volumes[fixed_id])
+            for moving_id, fixed_id in TEST_PAIRS
+        ]
+        test_source = f"npz key: {array_key}"
 
     model_128 = vxm.networks.VxmDense(LOW_SHAPE, NB_FEATURES, int_steps=0).to(DEVICE)
     model_128.load_state_dict(state_dict(CHECKPOINT_128_PATH))
@@ -151,9 +219,9 @@ def main():
     rows = []
 
     with torch.no_grad():
-        for case_id, (moving_id, fixed_id) in enumerate(TEST_PAIRS):
-            moving = torch.from_numpy(volumes[moving_id:moving_id + 1]).unsqueeze(1).to(DEVICE)
-            fixed = torch.from_numpy(volumes[fixed_id:fixed_id + 1]).unsqueeze(1).to(DEVICE)
+        for case_id, (case_name, moving_volume, fixed_volume) in enumerate(test_cases):
+            moving = torch.from_numpy(moving_volume[None, None]).to(DEVICE)
+            fixed = torch.from_numpy(fixed_volume[None, None]).to(DEVICE)
 
             # 128ベースライン: 低解像度DVFをフル解像度へ拡大し、元の256画像を変形して公平に評価する。
             moving_low = F.interpolate(moving, size=LOW_SHAPE, mode="trilinear", align_corners=False)
@@ -174,7 +242,7 @@ def main():
 
             save_case_figure(case_id, moving, fixed, moved_128, moved_wavelet)
             for method, moved in (("128_baseline", moved_128), ("256_wavelet", moved_wavelet)):
-                row = {"case": case_id, "moving_index": moving_id, "fixed_index": fixed_id, "method": method}
+                row = {"case": case_id, "case_name": case_name, "method": method}
                 row.update(metrics(fixed, moved))
                 rows.append(row)
 
@@ -193,7 +261,7 @@ def main():
         axis.grid(axis="y", alpha=0.3)
     figure.savefig(OUTPUT_DIR / "test_pair_metric_comparison.png", dpi=200, bbox_inches="tight")
     plt.show()
-    print(f"テスト配列キー: {array_key}")
+    print(f"テストデータ: {test_source}")
     print(f"CSV: {csv_path.resolve()}")
     print(f"比較図: {(OUTPUT_DIR / 'test_pair_metric_comparison.png').resolve()}")
 
