@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 
 from voxelmorph.torch.external_wavelet_registration import ExternalWaveletVxm
@@ -156,8 +157,8 @@ def _write_history(rows: list[dict], path: Path) -> None:
         writer.writerows(rows)
 
 
-def _save_loss_plot(rows: list[dict], path: Path) -> None:
-    """Save a compact training-loss chart without requiring a GUI backend."""
+def _save_loss_plot(rows: list[dict], path: Path, *, show_in_notebook: bool = True) -> None:
+    """Save and, in Jupyter, display the loss chart accumulated so far."""
     if not rows:
         return
     import matplotlib.pyplot as plt
@@ -173,6 +174,12 @@ def _save_loss_plot(rows: list[dict], path: Path) -> None:
     axis.legend()
     fig.tight_layout()
     fig.savefig(path, dpi=150)
+    if show_in_notebook:
+        try:
+            from IPython.display import display
+            display(fig)
+        except ImportError:
+            pass
     plt.close(fig)
 
 
@@ -268,6 +275,7 @@ def run_curriculum_pretraining(
         print(f'Loaded initial weights: {Path(initial_checkpoint).resolve()}')
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     target_transformer = SpatialTransformer(TARGET_SHAPE).to(device)
+
     rng = np.random.default_rng(seed)
     history: list[dict] = []
 
@@ -354,7 +362,7 @@ def run_different_patient_finetuning(
     batch_size: int = 2,
     learning_rate: float = 1e-6,
     image_weight: float = 100.0,
-    flow_weight: float = 0.01,
+    flow_weight: float = 0.0,
     smoothness_weight: float = 0.1,
     feature_channels: int = 16,
     checkpoint_prefix: str = '128dwt_trilinear_different_patients_finetune',
@@ -381,28 +389,47 @@ def run_different_patient_finetuning(
     print(f'Loaded pretrained weights: {Path(pretrained_checkpoint).resolve()}')
     print(f'Loaded {len(volumes)} volumes from {len(source_files)} files.')
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    target_transformer = SpatialTransformer(TARGET_SHAPE).to(device)
     rng = np.random.default_rng(seed)
     history: list[dict] = []
 
-    for epoch in tqdm(range(1, total_epochs + 1), desc='128→64 different-patient fine-tuning'):
-        stage = (epoch - 1) // stage_epochs + 1
-        max_shift = float(stage)
-        indices = rng.integers(0, len(volumes), size=batch_size)
-        moving_source = torch.from_numpy(volumes[indices]).unsqueeze(1).to(device)
+    for epoch in tqdm(range(1, total_epochs + 1),
+                      desc='128→64 image-only different-patient fine-tuning'):
+
+        # moving と fixed を必ず別患者から選ぶ
+        moving_indices = rng.integers(0, len(volumes), size=batch_size)
+        fixed_indices = rng.integers(0, len(volumes), size=batch_size)
+
+        while np.any(moving_indices == fixed_indices):
+            same_patient = moving_indices == fixed_indices
+            fixed_indices[same_patient] = rng.integers(
+                0, len(volumes), size=same_patient.sum()
+            )
+
+        moving_source = torch.from_numpy(
+            volumes[moving_indices]
+        ).unsqueeze(1).to(device)
+
+        fixed_source = torch.from_numpy(
+            volumes[fixed_indices]
+        ).unsqueeze(1).to(device)
+
+        # 128×256×256 → 64×128×128
         moving_target = resize_to_target(moving_source)
-        teacher_target_flow = smooth_random_target_flow(batch_size, max_shift, device)
-        fixed_target = target_transformer(moving_target, teacher_target_flow)
+        fixed_target = resize_to_target(fixed_source)
+
         moving_coefficients = haar_analysis_3d(moving_target)
         fixed_coefficients = haar_analysis_3d(fixed_target)
-        moved_target, _, predicted_coefficient_flow = model(moving_coefficients, fixed_coefficients)
-        teacher_coefficient_flow = F.interpolate(
-            teacher_target_flow, size=COEFFICIENT_SHAPE, mode='trilinear', align_corners=False
-        ) / 2.0
+
+        # モデルがDVFを予測してMovingをWarpする
+        moved_target, _, predicted_coefficient_flow = model(
+            moving_coefficients, fixed_coefficients
+        )
+
+        # 教師DVF・DVF誤差は使用しない
         image_loss = F.mse_loss(moved_target, fixed_target)
-        flow_loss = F.mse_loss(predicted_coefficient_flow, teacher_coefficient_flow)
         smooth_loss = flow_smoothness(predicted_coefficient_flow)
-        loss = image_weight * image_loss + flow_weight * flow_loss + smoothness_weight * smooth_loss
+        loss = image_weight * image_loss + smoothness_weight * smooth_loss
+
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -410,38 +437,68 @@ def run_different_patient_finetuning(
 
         if epoch % 100 == 0:
             row = {
-                'epoch': epoch, 'stage': stage, 'max_shift_target_pixels': max_shift,
-                'loss': loss.item(), 'image_loss': image_loss.item(),
-                'flow_loss': flow_loss.item(), 'smoothness_loss': smooth_loss.item(),
+                'epoch': epoch,
+                'loss': loss.item(),
+                'image_loss': image_loss.item(),
+                'flow_loss': 0.0,  # CSV・グラフ用。学習には使わない
+                'smoothness_loss': smooth_loss.item(),
             }
             history.append(row)
+
             print(
-                f'epoch={epoch:05d}/{total_epochs}, stage={stage:02d}, ±{max_shift:.0f}px, '
-                f'loss={loss.item():.6f}, image={image_loss.item():.6f}, '
-                f'dvf={flow_loss.item():.6f}, smooth={smooth_loss.item():.6f}'
+                f'Epoch {epoch:05d}/{total_epochs} | '
+                f'loss={loss.item():.6f} | '
+                f'image={image_loss.item():.6f} | '
+                f'smooth={smooth_loss.item():.6f} | '
+                f'patients={moving_indices.tolist()} → {fixed_indices.tolist()}'
             )
 
         if epoch % stage_epochs == 0:
-            checkpoint_path = output_dir / f'{checkpoint_prefix}_stage_{stage:02d}_epoch_{epoch:05d}.pth'
+            checkpoint_path = (
+                output_dir
+                / f'{checkpoint_prefix}_epoch_{epoch:05d}.pth'
+            )
+
             torch.save({
-                'epoch': epoch, 'stage': stage, 'max_shift_target_pixels': max_shift,
-                'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(),
-                'target_shape': TARGET_SHAPE, 'coefficient_shape': COEFFICIENT_SHAPE,
-                'feature_channels': feature_channels, 'pretrained_checkpoint': str(pretrained_checkpoint),
-                'data_root': str(data_root), 'source_files': source_files,
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'target_shape': TARGET_SHAPE,
+                'coefficient_shape': COEFFICIENT_SHAPE,
+                'feature_channels': feature_channels,
+                'pretrained_checkpoint': str(pretrained_checkpoint),
+                'data_root': str(data_root),
+                'source_files': source_files,
             }, checkpoint_path)
+
             _write_history(history, output_dir / f'{checkpoint_prefix}_history.csv')
             _save_loss_plot(history, output_dir / f'{checkpoint_prefix}_loss_progress.png')
             print(f'Saved: {checkpoint_path.resolve()}')
 
         if visualization_every > 0 and epoch % visualization_every == 0:
-            preview_path = preview_dir / f'epoch_{epoch:05d}_registration.png'
-            _save_registration_preview(
-                moving_target, fixed_target, moved_target, teacher_coefficient_flow,
-                predicted_coefficient_flow, preview_path, epoch,
-            )
-            print(f'Saved registration preview: {preview_path.resolve()}')
+            slice_index = moving_target.shape[2] // 2
 
+            fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+            for axis, image, title in zip(
+                axes,
+                (
+                    moving_target[0, 0, slice_index],
+                    fixed_target[0, 0, slice_index],
+                    moved_target[0, 0, slice_index],
+                ),
+                ('Moving', 'Fixed', 'Moved'),
+            ):
+                axis.imshow(image.detach().cpu(), cmap='gray')
+                axis.set_title(title)
+                axis.axis('off')
+
+            fig.tight_layout()
+            preview_path = preview_dir / f'epoch_{epoch:05d}_registration.png'
+            fig.savefig(preview_path, dpi=160, bbox_inches='tight')
+            plt.show()
+            plt.close(fig)
+            print(f'Saved registration preview: {preview_path.resolve()}')
+    
     final_path = output_dir / f'{checkpoint_prefix}_final.pth'
     torch.save({
         'epoch': total_epochs, 'model_state_dict': model.state_dict(),
