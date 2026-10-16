@@ -1,0 +1,12 @@
+,value
+n_pairs,101.0
+ncc_after_mean,0.9470561860307363
+rmse_after_mean,0.0775592318265745
+lung_interior_edge_ncc_before_mean,0.28679999488797114
+lung_interior_edge_ncc_after_mean,0.36389536822434165
+lung_interior_edge_ncc_improvement_mean,0.07709537333637063
+interior_folding_mean_percent,0.0
+interior_folding_max_percent,0.0
+lung_folding_mean_percent,0.0
+folded_pairs,0.0
+interior_min_jacobian_global,0.00218906719237566

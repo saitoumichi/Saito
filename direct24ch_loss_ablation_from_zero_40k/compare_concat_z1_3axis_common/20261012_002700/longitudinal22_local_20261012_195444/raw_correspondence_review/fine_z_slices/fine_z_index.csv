@@ -1,0 +1,7 @@
+﻿pair,fixed_q_zyx,moving_z_min,moving_z_max,image
+pair1,"(89.0, 165.0, 187.0)",80,98,D:\Saito\direct24ch_loss_ablation_from_zero_40k\compare_concat_z1_3axis_common\20261012_002700\longitudinal22_local_20261012_195444\raw_correspondence_review\fine_z_slices\pair1_moving_z_every1.png
+pair2,"(29.0, 109.0, 173.0)",20,38,D:\Saito\direct24ch_loss_ablation_from_zero_40k\compare_concat_z1_3axis_common\20261012_002700\longitudinal22_local_20261012_195444\raw_correspondence_review\fine_z_slices\pair2_moving_z_every1.png
+pair14,"(57.0, 137.0, 75.0)",48,66,D:\Saito\direct24ch_loss_ablation_from_zero_40k\compare_concat_z1_3axis_common\20261012_002700\longitudinal22_local_20261012_195444\raw_correspondence_review\fine_z_slices\pair14_moving_z_every1.png
+pair17,"(57.0, 129.0, 71.0)",48,66,D:\Saito\direct24ch_loss_ablation_from_zero_40k\compare_concat_z1_3axis_common\20261012_002700\longitudinal22_local_20261012_195444\raw_correspondence_review\fine_z_slices\pair17_moving_z_every1.png
+pair20,"(83.0, 141.0, 61.0)",74,92,D:\Saito\direct24ch_loss_ablation_from_zero_40k\compare_concat_z1_3axis_common\20261012_002700\longitudinal22_local_20261012_195444\raw_correspondence_review\fine_z_slices\pair20_moving_z_every1.png
+pair21,"(23.0, 149.0, 154.0)",14,32,D:\Saito\direct24ch_loss_ablation_from_zero_40k\compare_concat_z1_3axis_common\20261012_002700\longitudinal22_local_20261012_195444\raw_correspondence_review\fine_z_slices\pair21_moving_z_every1.png

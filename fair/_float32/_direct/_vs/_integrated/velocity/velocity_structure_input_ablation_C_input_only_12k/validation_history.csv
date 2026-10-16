@@ -1,0 +1,2 @@
+epoch,train_shift_px,train_local_alpha,teacher_gate,input_gate,val_ncc_mean,val_edge_ncc_mean,val_flow_mae_mean,val_folding_mean_percent,val_folded_cases,val_min_detj_global
+8000,8,0.0,False,True,0.9903950788080692,0.8357952892780304,1.1490265727043152,0.0,0,0.04086265712976456

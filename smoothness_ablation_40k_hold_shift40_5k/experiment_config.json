@@ -1,0 +1,18 @@
+{
+  "base_checkpoint": "D:\\Saito\\wavelet_dvf_24ch_curriculum\\wavelet_dvf_24ch_curriculum_final.pth",
+  "fixed_shift": 40,
+  "extra_epochs": 5000,
+  "learning_rate": 2e-06,
+  "image_weight": 100.0,
+  "dvf_weight": 0.01,
+  "high_dvf_band_weight": 5.0,
+  "base_loss_mean": 0.06384608037769794,
+  "smoothness_mean": 0.006693804962560534,
+  "experiments": {
+    "A_no_smoothness": 0.0,
+    "B_smoothness_1percent": 0.09538084950905912,
+    "C_smoothness_5percent": 0.4769042475452956,
+    "D_smoothness_10percent": 0.9538084950905912,
+    "E_smoothness_20percent": 1.9076169901811824
+  }
+}

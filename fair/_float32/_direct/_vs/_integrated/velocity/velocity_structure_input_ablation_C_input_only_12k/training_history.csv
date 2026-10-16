@@ -1,0 +1,2 @@
+epoch,shift,local_alpha,total_loss,image_mse,global_coeff_mse,local_coeff_mse,flow_mse,mean_abs_global_velocity,mean_abs_local_velocity,mean_abs_total_velocity,mean_abs_integrated_dvf
+8000,8,0.1,0.002249137731269002,6.355447567329975e-06,0.16133694350719452,2.2357840862241574e-05,0.02005774900317192,0.11042412370443344,0.002951416652649641,0.1104246973991394,0.1101999506354332

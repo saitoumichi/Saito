@@ -1,0 +1,3 @@
+shift,n_samples,integrated_dvf_mean_abs_mean,integrated_dvf_max_abs_max,interior_folding_mean_percent,interior_folding_max_percent,n_samples_with_interior_fold,interior_min_jacobian_min,interior_min_jacobian_mean
+30,20,0.9898796945810318,9.20745849609375,0.0,0.0,0,0.004200266674160957,0.37668045749887824
+40,20,1.3565138936042787,9.771560668945312,0.0,0.0,0,0.0003976514271926135,0.2526094999149791

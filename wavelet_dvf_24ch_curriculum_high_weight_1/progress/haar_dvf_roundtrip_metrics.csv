@@ -1,0 +1,15 @@
+metric,value
+DVF MAE,7.276589997218252e-08
+DVF RMSE,9.959774160961388e-08
+DVF max abs error,8.344650268554688e-07
+DVF NCC,1.0
+Image MAE,2.0638442066456264e-09
+Image RMSE,4.9143785929572914e-08
+Image max abs error,8.046627044677734e-06
+Image NCC,1.0
+Jacobian MAE,6.761307957958707e-08
+Jacobian max abs error,1.0728836059570312e-06
+Direct min det(J),0.94191575050354
+Round-trip min det(J),0.9419159293174744
+Direct folding percent,0.0
+Round-trip folding percent,0.0

@@ -1,0 +1,7 @@
+﻿patient_id,moving_file,fixed_file,pairing_rule
+MIC12763,MIC12763_2017_10.npz,MIC12763_2020_8.npz,oldest_to_latest_status_unverified
+MIC28345,MIC28345_2020_9.npz,MIC28345_2020_12.npz,oldest_to_latest_status_unverified
+MIC35407,MIC35407_2019_7.npz,MIC35407_2020_9.npz,oldest_to_latest_status_unverified
+MIC39970,MIC39970_2016_3.npz,MIC39970_2020_9.npz,oldest_to_latest_status_unverified
+MIC51885,MIC51885_2016_4.npz,MIC51885_2020_8.npz,oldest_to_latest_status_unverified
+MIC51965,MIC51965_2018_8.npz,MIC51965_2020_9.npz,oldest_to_latest_status_unverified

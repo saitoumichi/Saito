@@ -1,0 +1,9 @@
+,value
+n_pairs,101.0
+ncc_improvement_mean,0.06408025132547511
+rmse_improvement_mean,0.061955378732026216
+interior_folding_mean_percent,2.492012994566766
+interior_folding_max_percent,8.585143834352493
+n_pairs_with_interior_folding,101.0
+global_min_jacobian,-953.9389038085938
+interior_min_jacobian,-953.9389038085938

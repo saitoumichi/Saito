@@ -1,0 +1,6 @@
+Metric,Before,After
+Dice (foreground proxy) ↑,0.9604114704494189,0.9747 ± 0.0303
+Jaccard (foreground proxy) ↑,0.9256163774589184,0.9522 ± 0.0540
+MS-SSIM (axial slice-wise) ↑,0.8463610888909465,0.9015 ± 0.0571
+NCC ↑,0.9200090846592066,0.9522 ± 0.0495
+RMSE [HU] ↓,437.1092170877975,319.05 ± 158.98

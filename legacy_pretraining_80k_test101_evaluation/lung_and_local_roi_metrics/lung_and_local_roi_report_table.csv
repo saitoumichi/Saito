@@ -1,0 +1,6 @@
+Metric,Lung interior: Before,Lung interior: After,High-edge local ROI: Before,High-edge local ROI: After
+Edge Dice ↑,0.4244,0.4062,0.3572,0.2363
+Edge Jaccard ↑,0.2729,0.2570,0.2218,0.1360
+MS-SSIM (ROI crop) ↑,0.7703,0.8801,0.7698,0.8793
+NCC ↑,0.2368,0.5229,0.2444,0.5287
+RMSE [HU] ↓,299.3476,192.9949,395.6546,292.8443

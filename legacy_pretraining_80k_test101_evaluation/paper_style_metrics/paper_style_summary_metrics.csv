@@ -1,0 +1,2 @@
+model,n_pairs,dice_before_mean,dice_after_mean,dice_after_std,jaccard_before_mean,jaccard_after_mean,jaccard_after_std,ms_ssim_before_mean,ms_ssim_after_mean,ms_ssim_after_std,ncc_before_mean,ncc_after_mean,ncc_after_std,rmse_after_hu_mean,rmse_after_hu_std
+legacy_direct_wavelet_pretraining_80k,101,0.9225216987545465,0.952273723281419,0.023710292008956073,0.8575880012024796,0.909834577567991,0.04193871134027241,0.8565524990865176,0.9326748567412027,0.04529586507543864,0.9200090846592066,0.9709106790103804,0.04126669175708983,237.69656290702844,146.76466664080544

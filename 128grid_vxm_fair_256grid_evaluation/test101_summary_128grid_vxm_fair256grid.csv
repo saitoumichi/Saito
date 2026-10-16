@@ -1,0 +1,8 @@
+﻿指標,結果（Test101 平均 ± SD）
+Whole NCC,0.981 ± 0.027
+Lung NCC,0.306 ± 0.063
+Lung-edge NCC,0.729 ± 0.060
+Lung-edge Dice,0.555 ± 0.042
+mean |DVF|,2.17 ± 0.54 voxel
+Folding (%),64.684 ± 0.898（最大 67.139%）
+min det(J),-27.399 ± 16.181（最小 -77.583）

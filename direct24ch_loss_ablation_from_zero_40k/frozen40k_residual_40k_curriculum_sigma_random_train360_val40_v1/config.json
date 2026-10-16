@@ -1,0 +1,28 @@
+{
+  "experiment_id": "frozen40k_residual_40k_curriculum_sigma_random_train360_val40_v1",
+  "train_data": "D:\\Saito\\Data\\TrainData_NoBed.npz",
+  "baseline_checkpoint": "D:\\Saito\\direct24ch_loss_ablation_from_zero_40k\\M_small_separate_haar_targeted_z1_lung_bone_proxy_v3_from_zero_40k\\checkpoints\\checkpoint_epoch_40000.pth",
+  "total_updates": 40000,
+  "batch_size": 1,
+  "learning_rate": 0.0001,
+  "train": 360,
+  "val": 40,
+  "split_seed": 20261012,
+  "val_seed": 20261013,
+  "sigma_z": [
+    2.0,
+    6.0
+  ],
+  "sigma_y": [
+    4.0,
+    12.0
+  ],
+  "sigma_x": [
+    4.0,
+    12.0
+  ],
+  "lambda_residual": 1.0,
+  "lambda_local_image": 20.0,
+  "lambda_smooth": 0.05,
+  "lambda_magnitude": 0.01
+}

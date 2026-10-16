@@ -1,0 +1,4 @@
+weight_scheme,total_weighted_coefficient_MSE,LLL_contribution_percent,all_high_bands_contribution_percent
+uniform_current,2.38153932882664,99.47944484974943,0.5205551502505728
+grouped_proposed,2.4940751373459005,94.99080712204768,5.009192877952316
+rms_capped_20,2.6170866158241854,90.52593402412433,9.474065975875675

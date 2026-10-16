@@ -1,0 +1,3 @@
+velocity_scale,worst_shift_min_jacobian,worst_shift_max_folding_percent,total_samples_with_fold,safe
+0.4,0.5413532257080078,0.0,0,True
+0.5,0.17016927897930145,0.0,0,False

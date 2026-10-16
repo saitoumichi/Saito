@@ -1,0 +1,18 @@
+{
+  "pair": "pair90",
+  "z": 58,
+  "coordinate_order": "xy_on_axial_slice",
+  "start": [
+    64.97763347763347,
+    101.08730158730157
+  ],
+  "center": [
+    75.32106782106783,
+    118.08008658008657
+  ],
+  "end": [
+    85.29509379509378,
+    132.1176046176046
+  ],
+  "note": "All three clicks were made on Fixed. Exactly the same sampling line was used on Moved."
+}

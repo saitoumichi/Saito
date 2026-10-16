@@ -1,0 +1,5 @@
+test,DVF MAE,DVF RMSE,Image MAE,Image RMSE,Image NCC,min det(J),folding (%)
+Haar DVF round-trip,1.231829401149298e-06,1.343420422017516e-06,,,,,
+Warp: original DVF vs reconstructed DVF,,,1.1474791117294103e-09,1.919701730912493e-08,1.0000001192092896,,
+"Known integer shift direction [dz,dy,dx]=(2.0, -4.0, 10.0)",,,1.8251375877298415e-07,6.760058113286505e-07,0.9999998807907104,,
+Jacobian: constant translation,,,,,,1.0,0.0
