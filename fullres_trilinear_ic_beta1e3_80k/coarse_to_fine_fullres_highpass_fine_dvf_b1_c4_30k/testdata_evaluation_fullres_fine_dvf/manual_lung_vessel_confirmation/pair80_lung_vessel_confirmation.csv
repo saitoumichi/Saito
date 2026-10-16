@@ -1,0 +1,2 @@
+﻿pair,slice_index,lung_dice_before,lung_dice_after,lung_folding_percent,lung_jacobian_min,vessel_tre_voxel_mean,vessel_tre_mm_mean,n_vessel_landmarks
+pair80,50,1.0,0.8260052755332228,2.181814520594839,-2.1865952014923096,,,0

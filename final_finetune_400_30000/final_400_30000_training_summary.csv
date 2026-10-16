@@ -1,0 +1,4 @@
+condition,smoothness_weight,jacobian_weight,final_training_mse,final_training_smoothness,final_training_jacobian_loss,time_minutes,model_path
+MSE,0.0,0.0,0.0025588329881429672,0.17774361371994019,0.10844521224498749,121.770614361763,D:\Saito\final_finetune_400_30000\MSE_final.pth
+MSE_Smooth,0.02,0.0,0.0030401330441236496,0.030440134927630424,0.0007782286847941577,121.98142142295838,D:\Saito\final_finetune_400_30000\MSE_Smooth_final.pth
+MSE_Smooth_Jac,0.02,0.001,0.0030444879084825516,0.03031095489859581,0.0007022892241366208,119.4904639363289,D:\Saito\final_finetune_400_30000\MSE_Smooth_Jac_final.pth

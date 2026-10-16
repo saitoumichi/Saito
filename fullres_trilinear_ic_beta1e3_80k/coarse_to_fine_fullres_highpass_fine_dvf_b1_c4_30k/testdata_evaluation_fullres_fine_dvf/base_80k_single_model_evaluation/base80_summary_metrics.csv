@@ -1,0 +1,2 @@
+﻿model,n_pairs,dice_after_mean,jaccard_after_mean,ncc_after_mean,rmse_hu_after_mean,ssim_after_mean,ms_ssim_after_mean,fsim_after_mean,folding_mean_percent,folding_max_percent,lung_dice_after_mean,lung_folding_mean_percent
+80k_single_model,101,0.9794309208249047,0.9613295727615756,0.9690679147758191,220.6273245654637,0.9084747954393426,0.930536153292892,0.9475374245407557,0.23536540494106784,1.108694076538086,0.797512448297687,0.0015670350390687281

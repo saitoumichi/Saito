@@ -1,0 +1,3 @@
+﻿model,n_pairs,valid_body_folding_mean_percent,interior_valid_body_folding_mean_percent,interior_valid_body_folding_max_percent,interior_valid_body_jacobian_min,interior_valid_body_fraction_mean_percent
+30k_coarse_only,101,0.1053191341478961,0.07052314690718296,0.49310775360728853,-2.98136568069458,82.26662896648628
+80k_single,101,0.06331301974559991,0.006130213677957331,0.04982232114720877,-1.318894624710083,82.773829019362

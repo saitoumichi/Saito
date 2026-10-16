@@ -1,0 +1,3 @@
+﻿model,mean_folding_percent,max_folding_percent,worst_folding_pair,mean_lung_folding_percent,max_lung_folding_percent,worst_lung_folding_pair
+80k single model,0.23536540494106784,1.108694076538086,pair89,0.0015670350390687281,0.05159788324843762,pair39
+30k coarse only,0.5233263025189391,3.2541751861572266,pair90,0.06757116278438324,1.5082327476726336,pair36

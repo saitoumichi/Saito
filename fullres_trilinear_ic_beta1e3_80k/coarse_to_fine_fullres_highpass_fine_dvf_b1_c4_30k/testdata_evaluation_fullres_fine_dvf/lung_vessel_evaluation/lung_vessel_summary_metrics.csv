@@ -1,0 +1,2 @@
+﻿model,n_pairs,lung_dice_before_mean,lung_dice_after_mean,lung_dice_improvement,lung_folding_mean_percent,lung_folding_max_percent,worst_lung_folding_pair,vessel_tre_voxel_mean,vessel_tre_mm_mean,n_vessel_landmarks_total
+model_coarse_to_fine_fullres_fine_dvf_30k_final,101,0.7435935750700116,0.7979744543767662,0.054380879306754615,2.4935633233053665,9.17669499181049,pair90,,,0

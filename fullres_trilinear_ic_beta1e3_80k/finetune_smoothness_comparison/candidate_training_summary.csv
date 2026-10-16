@@ -1,0 +1,6 @@
+﻿smooth_weight,final_model_path,training_time,final_image_loss,final_raw_ic_loss,final_raw_smooth_loss
+0.002,D:\Saito\fullres_trilinear_ic_beta1e3_80k\finetune_smoothness_comparison\smooth_2e-03\model_fullres_trilinear_ic_smooth_2e-03_finetuned_5000k_final.pth,38:58,0.00403601536527276,0.45885810256004333,0.18844857811927795
+0.003,D:\Saito\fullres_trilinear_ic_beta1e3_80k\finetune_smoothness_comparison\smooth_3e-03\model_fullres_trilinear_ic_smooth_3e-03_finetuned_5000k_final.pth,38:47,0.004124772269278765,0.43003204464912415,0.14584770798683167
+0.005,D:\Saito\fullres_trilinear_ic_beta1e3_80k\finetune_smoothness_comparison\smooth_5e-03\model_fullres_trilinear_ic_smooth_5e-03_finetuned_5000k_final.pth,38:25,0.0042348382994532585,0.3920188546180725,0.10671767592430115
+0.007,D:\Saito\fullres_trilinear_ic_beta1e3_80k\finetune_smoothness_comparison\smooth_7e-03\model_fullres_trilinear_ic_smooth_7e-03_finetuned_5000k_final.pth,38:27,0.004329514689743519,0.36936625838279724,0.0909261703491211
+0.008,D:\Saito\fullres_trilinear_ic_beta1e3_80k\finetune_smoothness_comparison\smooth_8e-03\model_fullres_trilinear_ic_smooth_8e-03_finetuned_5000k_final.pth,38:26,0.004375101067125797,0.3592071533203125,0.08494842052459717

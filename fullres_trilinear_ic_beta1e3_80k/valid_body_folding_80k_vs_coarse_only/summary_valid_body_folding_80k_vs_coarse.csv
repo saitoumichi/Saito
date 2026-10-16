@@ -1,0 +1,3 @@
+﻿model,n_pairs,raw_full_folding_mean_percent,raw_full_folding_max_percent,raw_full_worst_pair,body_folding_mean_percent,valid_body_folding_mean_percent,valid_body_folding_max_percent,valid_body_worst_pair,valid_body_jacobian_min,valid_body_fraction_mean_percent,out_of_fov_body_fraction_mean_percent
+80k_single,101,0.23524536944852018,1.1082649230957031,pair89,0.06402056794469782,0.06331301974559993,0.47803249457325736,pair61,-4.390913009643555,99.90170886446212,0.09829113553788482
+30k_coarse_only,101,0.5601063813313399,3.093409538269043,pair90,0.11200138101069303,0.10531913414789608,0.6166281887171985,pair61,-3.203378677368164,99.62702396901173,0.37297603098824583
